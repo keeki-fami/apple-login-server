@@ -30,7 +30,7 @@ async function verifyAppleToken(token, nonce) {
   const keys = await getAppleKeys();
   const decodedHeader = jwt.decode(token, { complete: true }).header;
   const key = keys.find((k) => k.kid === decodedHeader.kid);
-
+  
   if (!key) {
     throw new Error("Unable to find matching JWK for token");
   }
@@ -38,7 +38,7 @@ async function verifyAppleToken(token, nonce) {
   const publicKey = jwkToPem(key);
   const payload = jwt.verify(token, publicKey, {
     algorithms: ["RS256"],
-    nonce: nonce
+    nonce: nonce,
   });
 
   return payload;
@@ -56,10 +56,5 @@ exports.appleSignIn = functions.https.onRequest(async (req, res) => {
     console.error(err);
     res.status(401).send("Unauthorized");
   }
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
 });
 
