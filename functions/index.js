@@ -1,10 +1,15 @@
-const functions = require("firebase-functions");
+// index.js
+const express = require("express");
 const admin = require("firebase-admin");
 const axios = require("axios");
 const jwt = require("jsonwebtoken");
 const jwkToPem = require("jwk-to-pem");
+const bodyParser = require("body-parser");
 
 admin.initializeApp();
+
+const app = express();
+app.use(bodyParser.json());
 
 let appleKeys;
 
@@ -30,7 +35,7 @@ async function verifyAppleToken(token, nonce) {
   const keys = await getAppleKeys();
   const decodedHeader = jwt.decode(token, { complete: true }).header;
   const key = keys.find((k) => k.kid === decodedHeader.kid);
-  
+
   if (!key) {
     throw new Error("Unable to find matching JWK for token");
   }
@@ -44,9 +49,14 @@ async function verifyAppleToken(token, nonce) {
   return payload;
 }
 
-exports.appleSignIn = functions.https.onRequest(async (req, res) => {
+// POST /appleSignIn に対して処理
+app.post("/appleSignIn", async (req, res) => {
   try {
     const { identityToken, nonce } = req.body;
+    if (!identityToken || !nonce) {
+      return res.status(400).json({ error: "identityToken and nonce are required" });
+    }
+
     const payload = await verifyAppleToken(identityToken, nonce);
     const uid = `apple:${payload.sub}`;
 
@@ -54,7 +64,13 @@ exports.appleSignIn = functions.https.onRequest(async (req, res) => {
     res.json({ firebase_token: customToken });
   } catch (err) {
     console.error(err);
-    res.status(401).send("Unauthorized");
+    res.status(401).json({ error: "Unauthorized" });
   }
+});
+
+// 環境変数PORTか3000番ポートで起動
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
 
