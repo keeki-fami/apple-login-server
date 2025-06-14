@@ -1,11 +1,8 @@
 const express = require("express");
-const admin = require("firebase-admin");
 const axios = require("axios");
 const jwt = require("jsonwebtoken");
 const jwkToPem = require("jwk-to-pem");
 const bodyParser = require("body-parser");
-
-admin.initializeApp();
 
 const app = express();
 app.use(bodyParser.json());  // JSONのリクエストボディをパースする
@@ -43,7 +40,7 @@ async function verifyAppleToken(token, nonce) {
   // JWTを検証する。nonceはクライアント側でSHA256済みの値を送っているので、そのまま比較
   const payload = jwt.verify(token, publicKey, {
     algorithms: ["RS256"],
-    nonce: nonce
+    nonce
   });
 
   // ここでsub（ユーザー固有ID）があることを確認
@@ -67,14 +64,11 @@ app.post("/appleSignIn", async (req, res) => {
     // トークン検証
     const payload = await verifyAppleToken(identityToken, nonce);
 
-    // Firebase UIDにAppleのsubを利用
-    const uid = `apple:${payload.sub}`;
+    res.json({ success: true, apple_sub: payload.sub });
 
     // Firebaseカスタムトークン発行
-    const firebaseToken = await admin.auth().createCustomToken(uid);
 
     // クライアントに返す
-    res.json({ firebase_token: firebaseToken });
   } catch (error) {
     console.error("Apple Sign In Error:", error);
     res.status(401).send("Unauthorized");
