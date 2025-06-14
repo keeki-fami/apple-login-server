@@ -1,3 +1,5 @@
+require('dotenv').config();
+const SECRET_KEY = process.env.SECRET_KEY;
 const express = require("express");
 const axios = require("axios");
 const jwt = require("jsonwebtoken");
@@ -6,10 +8,10 @@ const bodyParser = require("body-parser");
 const mysql = require("mysql2/promise");
 
 const pool = mysql.createPool({
-  host: 'localhost',
-  user: 'your_mysql_user',
-  password: 'your_mysql_password',
-  database: 'your_database_name',
+  host: process.env.DB.HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
@@ -109,8 +111,6 @@ async function findOrCreateUser(appleSub) {
     conn.release();
   }
 }
-
-const SECRET_KEY = 'q0xj2nh6ggf4z05piw4re1jf6vbkjq569n9304jskxp';
 
 function generateJwt(user) {
   return jwt.sign(
