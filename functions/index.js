@@ -124,6 +124,39 @@ function generateJwt(user) {
   );
 }
 
+const SECRET_KEY = 'あなたの秘密鍵（先ほどJWT発行で使ったもの）';
+
+// JWT認証ミドルウェア
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];  // "Bearer <token>" の形を想定
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) return res.status(401).json({ error: "No token provided" });
+
+  jwt.verify(token, SECRET_KEY, (err, user) => {
+    if (err) return res.status(403).json({ error: "Invalid token" });
+    req.user = user;
+    next();
+  });
+}
+
+// 認証必須APIの例：ユーザープロフィール取得
+app.get('/user/profile', authenticateToken, async (req, res) => {
+  try {
+    const userSub = req.user.sub;
+    const conn = await pool.getConnection();
+    const [rows] = await conn.query('SELECT id, apple_sub FROM users WHERE apple_sub = ?', [userSub]);
+    conn.release();
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    res.json(rows[0]);
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 
 // サーバ起動
 const PORT = process.env.PORT || 3000;
