@@ -110,7 +110,6 @@ async function findOrCreateUser(appleSub) {
   }
 }
 
-const jwt = require('jsonwebtoken');
 const SECRET_KEY = 'あなたの秘密鍵（十分に長くランダムな文字列）';
 
 function generateJwt(user) {
