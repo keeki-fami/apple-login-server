@@ -3,6 +3,18 @@ const axios = require("axios");
 const jwt = require("jsonwebtoken");
 const jwkToPem = require("jwk-to-pem");
 const bodyParser = require("body-parser");
+const mysql = require("mysql2/promise");
+
+const pool = mysql.createPool({
+  host: 'localhost',
+  user: 'your_mysql_user',
+  password: 'your_mysql_password',
+  database: 'your_database_name',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
+});
+
 
 const app = express();
 app.use(bodyParser.json());  // JSONのリクエストボディをパースする
@@ -64,6 +76,10 @@ app.post("/appleSignIn", async (req, res) => {
     // トークン検証
     const payload = await verifyAppleToken(identityToken, nonce);
 
+　　const user = await findOrCreateUser(payload.sub);
+
+    const token = generateJwt(user);
+
     res.json({ success: true, apple_sub: payload.sub });
 
     // Firebaseカスタムトークン発行
@@ -74,6 +90,40 @@ app.post("/appleSignIn", async (req, res) => {
     res.status(401).send("Unauthorized");
   }
 });
+
+async function findOrCreateUser(appleSub) {
+  const conn = await pool.getConnection();
+  try {
+    // 1. ユーザーがいるか検索
+    const [rows] = await conn.query('SELECT * FROM users WHERE apple_sub = ?', [appleSub]);
+    
+    if (rows.length > 0) {
+      // ユーザーが存在 → ログイン成功
+      return rows[0];
+    } else {
+      // ユーザーがいなければ新規作成
+      const [result] = await conn.query('INSERT INTO users (apple_sub) VALUES (?)', [appleSub]);
+      return { id: result.insertId, apple_sub: appleSub };
+    }
+  } finally {
+    conn.release();
+  }
+}
+
+const jwt = require('jsonwebtoken');
+const SECRET_KEY = 'あなたの秘密鍵（十分に長くランダムな文字列）';
+
+function generateJwt(user) {
+  return jwt.sign(
+    {
+      sub: user.apple_sub, // or user.id
+      iat: Math.floor(Date.now() / 1000), // 発行時間
+    },
+    SECRET_KEY,
+    { expiresIn: '7d' } // 有効期限7日など
+  );
+}
+
 
 // サーバ起動
 const PORT = process.env.PORT || 3000;
