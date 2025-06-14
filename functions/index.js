@@ -110,7 +110,7 @@ async function findOrCreateUser(appleSub) {
   }
 }
 
-const SECRET_KEY = 'あなたの秘密鍵（十分に長くランダムな文字列）';
+const SECRET_KEY = 'q0xj2nh6ggf4z05piw4re1jf6vbkjq569n9304jskxp';
 
 function generateJwt(user) {
   return jwt.sign(
@@ -122,8 +122,6 @@ function generateJwt(user) {
     { expiresIn: '7d' } // 有効期限7日など
   );
 }
-
-const SECRET_KEY = 'あなたの秘密鍵（先ほどJWT発行で使ったもの）';
 
 // JWT認証ミドルウェア
 function authenticateToken(req, res, next) {
