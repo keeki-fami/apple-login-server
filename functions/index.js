@@ -1,9 +1,10 @@
 const http = require("http");
 const jwt = require("jsonwebtoken"); //??
 const appleSignin = require("apple-signin-auth");
+require('dotenv').config();
 
-const SECRET_KEY = Jwt_Secret;
-const APPLE_CLIENT_ID = Apple_Client_Id;
+const SECRET_KEY = process.env.Jwt_Secret;
+const APPLE_CLIENT_ID = process.env.Apple_Client_Id;
 
 http.createServer((req,res)=>{
   if(req.method==="POST" && req.url==="/appleSignIn"){
