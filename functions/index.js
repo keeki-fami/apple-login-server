@@ -2,6 +2,7 @@ const http = require("http");
 const jwt = require("jsonwebtoken"); //??
 const appleSignin = require("apple-signin-auth");
 require('dotenv').config();
+const PORT = process.env.PORT || 8080;//envに書かなくても定義される。
 
 const SECRET_KEY = process.env.Jwt_Secret;
 const APPLE_CLIENT_ID = process.env.Apple_Client_Id;
